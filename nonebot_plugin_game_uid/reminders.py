@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from typing import Optional
 
 from nonebot import get_bots, logger
 
@@ -11,7 +12,7 @@ MIN_INTERVAL_MINUTES = 10
 MAX_INTERVAL_MINUTES = 30 * 24 * 60
 
 
-def parse_duration(value: str) -> int | None:
+def parse_duration(value: str) -> Optional[int]:
     """解析 10分钟、6小时、1天一类的时间间隔。"""
 
     match = DURATION_PATTERN.fullmatch(value.strip())
@@ -42,7 +43,7 @@ def build_reminder_message(game_key: str) -> str:
     )
 
 
-async def dispatch_due_reminders(*, now: float | None = None) -> int:
+async def dispatch_due_reminders(*, now: Optional[float] = None) -> int:
     """发送已到期提醒，返回成功发送数量。"""
 
     from .commands import get_repository

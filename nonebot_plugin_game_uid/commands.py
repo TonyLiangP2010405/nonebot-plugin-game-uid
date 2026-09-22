@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Optional
 
 import nonebot_plugin_localstore as localstore
 from nonebot import get_plugin_config, logger, on_command
@@ -70,8 +71,8 @@ reminder_status = on_command(
     block=True,
 )
 
-_repository: UIDRepository | None = None
-_repository_path: Path | None = None
+_repository: Optional[UIDRepository] = None
+_repository_path: Optional[Path] = None
 
 
 def get_repository() -> UIDRepository:
@@ -85,7 +86,7 @@ def get_repository() -> UIDRepository:
     return _repository
 
 
-def get_mentioned_user(message: Message) -> str | None:
+def get_mentioned_user(message: Message) -> Optional[str]:
     """提取消息中的第一个 QQ @，忽略 @全体成员。"""
 
     for segment in message:
@@ -96,7 +97,7 @@ def get_mentioned_user(message: Message) -> str | None:
     return None
 
 
-def parse_game_argument(text: str) -> tuple[Game | None, str | None]:
+def parse_game_argument(text: str) -> tuple[Optional[Game], Optional[str]]:
     """解析可选的单个游戏参数，并返回面向用户的错误。"""
 
     parts = text.split()
@@ -110,7 +111,7 @@ def parse_game_argument(text: str) -> tuple[Game | None, str | None]:
     return game, None
 
 
-def format_bindings(bindings: dict[str, str], game: Game | None = None) -> str:
+def format_bindings(bindings: dict[str, str], game: Optional[Game] = None) -> str:
     if game is not None:
         uid = bindings.get(game.key)
         return f"{game.name}：{uid}" if uid else f"尚未绑定{game.name} UID。"

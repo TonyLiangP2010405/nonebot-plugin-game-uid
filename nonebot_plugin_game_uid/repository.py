@@ -4,6 +4,7 @@ import asyncio
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional, Union
 
 import aiosqlite
 
@@ -20,7 +21,7 @@ class GroupReminder:
 class UIDRepository:
     """基于 SQLite 的 UID 存储。"""
 
-    def __init__(self, db_path: str | Path) -> None:
+    def __init__(self, db_path: Union[str, Path]) -> None:
         self.db_path = Path(db_path)
         self._initialized = False
         self._init_lock = asyncio.Lock()
@@ -83,7 +84,7 @@ class UIDRepository:
             await db.commit()
         return existed
 
-    async def get_uid(self, platform_user_id: str, game: str) -> str | None:
+    async def get_uid(self, platform_user_id: str, game: str) -> Optional[str]:
         await self.initialize()
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
@@ -149,7 +150,7 @@ class UIDRepository:
         game: str,
         interval_minutes: int,
         *,
-        now: float | None = None,
+        now: Optional[float] = None,
     ) -> None:
         await self.initialize()
         current_time = time.time() if now is None else now
@@ -168,7 +169,7 @@ class UIDRepository:
             )
             await db.commit()
 
-    async def get_reminder(self, group_id: str) -> GroupReminder | None:
+    async def get_reminder(self, group_id: str) -> Optional[GroupReminder]:
         await self.initialize()
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
@@ -183,7 +184,7 @@ class UIDRepository:
             await cursor.close()
         return GroupReminder(*row) if row else None
 
-    async def get_due_reminders(self, *, now: float | None = None) -> list[GroupReminder]:
+    async def get_due_reminders(self, *, now: Optional[float] = None) -> list[GroupReminder]:
         await self.initialize()
         current_time = time.time() if now is None else now
         async with aiosqlite.connect(self.db_path) as db:
@@ -200,7 +201,7 @@ class UIDRepository:
             await cursor.close()
         return [GroupReminder(*row) for row in rows]
 
-    async def mark_reminder_sent(self, group_id: str, *, now: float | None = None) -> None:
+    async def mark_reminder_sent(self, group_id: str, *, now: Optional[float] = None) -> None:
         await self.initialize()
         current_time = time.time() if now is None else now
         async with aiosqlite.connect(self.db_path) as db:

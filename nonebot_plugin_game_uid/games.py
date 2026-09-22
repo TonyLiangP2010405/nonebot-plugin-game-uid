@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -25,13 +26,13 @@ GAME_BY_KEY = {game.key: game for game in GAMES}
 GAME_BY_ALIAS = {alias.casefold(): game for game in GAMES for alias in game.aliases}
 
 
-def resolve_game(value: str) -> Game | None:
+def resolve_game(value: str) -> Optional[Game]:
     """将游戏名或别名规范化为受支持的游戏。"""
 
     return GAME_BY_ALIAS.get(value.strip().casefold())
 
 
-def validate_uid(value: str) -> str | None:
+def validate_uid(value: str) -> Optional[str]:
     """验证 UID，成功时返回清理后的 UID。"""
 
     uid = value.strip()
