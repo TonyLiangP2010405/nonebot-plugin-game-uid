@@ -10,8 +10,12 @@ __plugin_meta__ = PluginMetadata(
         "/绑定UID <游戏> <UID>\n"
         "/游戏UID [游戏] [@群友]\n"
         "/删除UID <游戏>\n"
+        "/清空UID [游戏]\n"
+        "/绑定帮助\n"
         "/群UID <游戏>\n"
         "/设置UID提醒 <间隔> <游戏>\n"
+        "/关闭UID提醒\n"
+        "/UID提醒状态\n"
         "/UID帮助"
     ),
     type="application",

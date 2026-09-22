@@ -41,6 +41,11 @@ async def test_repository_separates_users_and_games(tmp_path: Path) -> None:
         "10002": "200123456",
     }
 
+    assert await repository.delete_all_uids("10001") == 2
+    assert await repository.get_all("10001") == {}
+    assert await repository.get_all("10002") == {"genshin": "200123456"}
+    assert await repository.delete_all_uids("10001") == 0
+
 
 @pytest.mark.asyncio
 async def test_reminder_crud_and_due_time(tmp_path: Path) -> None:

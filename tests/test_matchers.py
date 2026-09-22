@@ -140,6 +140,58 @@ async def test_delete_uid(app: App, repository) -> None:
     assert await repository.get_uid("10001", "zzz") is None
 
 
+async def test_clear_one_uid(app: App, repository) -> None:
+    from nonebot.adapters.onebot.v11 import Bot
+
+    from nonebot_plugin_game_uid.commands import uid_clear
+
+    await repository.set_uid("10001", "genshin", "100123456")
+    await repository.set_uid("10001", "starrail", "101234567")
+    async with app.test_matcher(uid_clear) as ctx:
+        bot = ctx.create_bot(base=Bot, self_id="10000")
+        event = make_group_event("/清空UID 原神")
+        ctx.receive_event(bot, event)
+        ctx.should_pass_rule(uid_clear)
+        ctx.should_call_send(event, "已清空你的原神 UID。", result=None, bot=bot)
+        ctx.should_finished(uid_clear)
+
+    assert await repository.get_all("10001") == {"starrail": "101234567"}
+
+
+async def test_clear_all_uids_only_affects_current_user(app: App, repository) -> None:
+    from nonebot.adapters.onebot.v11 import Bot
+
+    from nonebot_plugin_game_uid.commands import uid_clear
+
+    await repository.set_uid("10001", "genshin", "100123456")
+    await repository.set_uid("10001", "zzz", "100987654")
+    await repository.set_uid("10002", "genshin", "200123456")
+    async with app.test_matcher(uid_clear) as ctx:
+        bot = ctx.create_bot(base=Bot, self_id="10000")
+        event = make_group_event("/清空UID")
+        ctx.receive_event(bot, event)
+        ctx.should_pass_rule(uid_clear)
+        ctx.should_call_send(event, "已一键清空你的全部游戏 UID（共 2 项）。", result=None, bot=bot)
+        ctx.should_finished(uid_clear)
+
+    assert await repository.get_all("10001") == {}
+    assert await repository.get_all("10002") == {"genshin": "200123456"}
+
+
+async def test_bind_help(app: App) -> None:
+    from nonebot.adapters.onebot.v11 import Bot
+
+    from nonebot_plugin_game_uid.commands import BIND_HELP_TEXT, bind_help
+
+    async with app.test_matcher(bind_help) as ctx:
+        bot = ctx.create_bot(base=Bot, self_id="10000")
+        event = make_group_event("/绑定帮助")
+        ctx.receive_event(bot, event)
+        ctx.should_pass_rule(bind_help)
+        ctx.should_call_send(event, BIND_HELP_TEXT, result=None, bot=bot)
+        ctx.should_finished(bind_help)
+
+
 async def test_group_uid_list_uses_group_cards(app: App, repository, monkeypatch) -> None:
     from unittest.mock import AsyncMock
 
@@ -184,7 +236,18 @@ async def test_set_reminder_as_superuser(app: App, repository) -> None:
             "已设置原神 UID 定时提醒，每 6小时发送一次。\n"
             "提醒内容：\n"
             "想查看本群群友的原神 UID 并添加游戏好友？\n"
-            "发送 /群UID 原神，即可查看群友主动绑定的 UID（群名片：UID）。",
+            "发送 /群UID 原神，即可查看群友主动绑定的 UID（群名片：UID）。\n\n"
+            "全部命令：\n"
+            "/绑定UID <游戏> <UID> — 绑定或更新自己的 UID\n"
+            "/游戏UID [游戏] [@群友] — 查询自己或群友的 UID\n"
+            "/删除UID <游戏> — 删除自己的指定游戏 UID\n"
+            "/清空UID [游戏] — 清空自己的指定游戏或全部 UID\n"
+            "/绑定帮助 — 查看 UID 绑定说明和示例\n"
+            "/群UID <游戏> — 查看本群“群名片：UID”列表\n"
+            "/设置UID提醒 <间隔> <游戏> — SUPERUSER 开启或更新定时提醒\n"
+            "/关闭UID提醒 — SUPERUSER 关闭定时提醒\n"
+            "/UID提醒状态 — 查看本群提醒设置\n"
+            "/UID帮助 — 查看完整帮助",
             result=None,
             bot=bot,
         )

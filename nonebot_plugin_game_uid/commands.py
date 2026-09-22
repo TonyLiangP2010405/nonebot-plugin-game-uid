@@ -17,8 +17,20 @@ from .repository import UIDRepository
 BIND_USAGE = "用法：/绑定UID <游戏> <UID>\n例如：/绑定UID 原神 100123456"
 QUERY_USAGE = "用法：/游戏UID [游戏] [@群友]\n例如：/游戏UID 星铁 @某位群友"
 DELETE_USAGE = "用法：/删除UID <游戏>\n例如：/删除UID 绝区零"
+CLEAR_USAGE = "用法：/清空UID [游戏]\n不填游戏时清空自己的全部 UID\n例如：/清空UID 或 /清空UID 原神"
 GROUP_LIST_USAGE = "用法：/群UID <游戏>\n例如：/群UID 星布谷地"
 REMINDER_USAGE = "用法：/设置UID提醒 <间隔> <游戏>\n例如：/设置UID提醒 6小时 原神\n间隔范围：10分钟～30天"
+BIND_HELP_TEXT = (
+    "UID 绑定帮助\n"
+    "绑定：/绑定UID <游戏> <UID>\n"
+    "示例：/绑定UID 原神 100123456\n"
+    "查询：/游戏UID [游戏] [@群友]\n"
+    "删除指定游戏：/删除UID <游戏>\n"
+    "清空指定游戏：/清空UID <游戏>\n"
+    "清空全部：/清空UID\n"
+    "支持游戏：星布谷地、原神、星铁、绝区零\n"
+    "UID 必须是 5～20 位半角数字。"
+)
 
 uid_bind = on_command(
     "绑定UID",
@@ -35,6 +47,18 @@ uid_query = on_command(
 uid_delete = on_command(
     "删除UID",
     aliases={"删除uid", "解绑UID", "解绑uid"},
+    priority=10,
+    block=True,
+)
+uid_clear = on_command(
+    "清空UID",
+    aliases={"清空uid", "清除UID", "清除uid", "一键清除UID", "一键清除uid", "一件清除UID", "一件清除uid"},
+    priority=10,
+    block=True,
+)
+bind_help = on_command(
+    "绑定帮助",
+    aliases={"绑定UID帮助", "绑定uid帮助"},
     priority=10,
     block=True,
 )
@@ -198,6 +222,34 @@ async def handle_delete(event: MessageEvent, args: Message = CommandArg()) -> No
     await uid_delete.finish(f"已删除{game.name} UID。")
 
 
+@uid_clear.handle()
+async def handle_clear(event: MessageEvent, args: Message = CommandArg()) -> None:
+    parts = args.extract_plain_text().strip().split()
+    if len(parts) > 1:
+        await uid_clear.finish(CLEAR_USAGE)
+
+    repository = get_repository()
+    user_id = event.get_user_id()
+    if parts:
+        game = resolve_game(parts[0])
+        if game is None:
+            await uid_clear.finish(f"不支持游戏“{parts[0]}”。\n支持：星布谷地、原神、星铁、绝区零")
+        deleted = await repository.delete_uid(user_id, game.key)
+        if not deleted:
+            await uid_clear.finish(f"你还没有绑定{game.name} UID。")
+        await uid_clear.finish(f"已清空你的{game.name} UID。")
+
+    deleted_count = await repository.delete_all_uids(user_id)
+    if deleted_count == 0:
+        await uid_clear.finish("你还没有绑定任何游戏 UID。")
+    await uid_clear.finish(f"已一键清空你的全部游戏 UID（共 {deleted_count} 项）。")
+
+
+@bind_help.handle()
+async def handle_bind_help() -> None:
+    await bind_help.finish(BIND_HELP_TEXT)
+
+
 @group_uid_list.handle()
 async def handle_group_uid_list(bot: Bot, event: MessageEvent, args: Message = CommandArg()) -> None:
     if not isinstance(event, GroupMessageEvent):
@@ -279,6 +331,8 @@ async def handle_help() -> None:
         "/绑定UID <游戏> <UID> — 绑定或更新自己的 UID\n"
         "/游戏UID [游戏] [@群友] — 查询 UID\n"
         "/删除UID <游戏> — 删除自己的绑定\n"
+        "/清空UID [游戏] — 清空自己的指定游戏或全部 UID\n"
+        "/绑定帮助 — 查看 UID 绑定说明和示例\n"
         "/群UID <游戏> — 按“群名片：UID”查看本群列表\n"
         "/设置UID提醒 <间隔> <游戏> — SUPERUSER 开启定时提醒\n"
         "/关闭UID提醒 — SUPERUSER 关闭定时提醒\n"

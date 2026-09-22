@@ -143,6 +143,20 @@ class UIDRepository:
             await db.commit()
         return deleted
 
+    async def delete_all_uids(self, platform_user_id: str) -> int:
+        """删除用户的全部 UID；返回实际删除数量。"""
+
+        await self.initialize()
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                "DELETE FROM uid_bindings WHERE platform_user_id = ?",
+                (platform_user_id,),
+            )
+            deleted = max(cursor.rowcount, 0)
+            await cursor.close()
+            await db.commit()
+        return deleted
+
     async def set_reminder(
         self,
         group_id: str,

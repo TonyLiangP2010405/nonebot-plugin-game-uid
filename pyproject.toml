@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-game-uid"
-version = "0.2.0"
+version = "0.3.0"
 description = "记录、汇总和定时播报群友的星布谷地、原神、崩坏：星穹铁道与绝区零 UID"
 authors = [{ name = "TonyLiangP2010405" }]
 license = "MIT"
