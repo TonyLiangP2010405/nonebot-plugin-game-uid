@@ -1,0 +1,118 @@
+# nonebot-plugin-game-uid
+
+一个用于记录和查询群友游戏 UID 的 NoneBot2 插件，支持星布谷地、原神、崩坏：星穹铁道和绝区零。
+
+## 功能
+
+- 每位 QQ 用户可分别绑定四款游戏的 UID
+- 重复绑定同一游戏时自动更新 UID
+- 查询自己的全部 UID 或指定游戏 UID
+- 在群聊中通过 `@群友` 查询对方主动绑定的 UID
+- 按“群名片：UID”列出本群已经绑定指定游戏的群友
+- SUPERUSER 可设置定时播报，周期性提示群友使用 UID 列表命令
+- 删除自己的指定游戏 UID
+- 使用 SQLite 异步持久化，无需外部数据库或游戏 API
+- 兼容“星布谷底”“星铁”“铁道”“崩铁”等常用别名
+
+## 安装
+
+### 使用 nb-cli 安装
+
+```bash
+nb plugin install nonebot-plugin-game-uid
+```
+
+### 使用 pip 安装
+
+```bash
+pip install nonebot-plugin-game-uid
+```
+
+### 使用 Poetry 安装
+
+```bash
+poetry add nonebot-plugin-game-uid
+```
+
+插件仅支持 OneBot V11 适配器。安装后请在 NoneBot 配置中加载 `nonebot_plugin_game_uid`。
+
+## 配置
+
+所有配置项都有默认值，插件可以零配置加载。数据库默认由 `nonebot-plugin-localstore` 保存到插件数据目录。如需自定义数据库位置，在 `.env` 中添加：
+
+```env
+GAME_UID_DB_PATH=data/game_uid/uid.db
+GAME_UID_LIST_LIMIT=100
+```
+
+| 配置项 | 默认值 | 说明 |
+|---|---|---|
+| `game_uid_db_path` | 空（localstore 插件数据目录下的 `uid.db`） | 可选的自定义 SQLite 数据库文件路径 |
+| `game_uid_list_limit` | `100` | 群 UID 列表单次最多显示人数 |
+
+UID 按 QQ 用户全局保存，不按群分别存储。群友只能查询用户主动绑定的 UID。
+
+## 使用方法
+
+| 指令 | 权限 | 范围 | 说明 |
+|---|---|---|---|
+| `/绑定UID <游戏> <UID>` | 所有人 | 群聊/私聊 | 绑定或更新自己的 UID |
+| `/游戏UID` | 所有人 | 群聊/私聊 | 查看自己的全部 UID |
+| `/游戏UID [游戏]` | 所有人 | 群聊/私聊 | 查看自己的指定 UID |
+| `/游戏UID [游戏] @群友` | 所有人 | 群聊 | 查看群友的指定 UID |
+| `/游戏UID @群友` | 所有人 | 群聊 | 查看群友的全部 UID |
+| `/删除UID <游戏>` | 所有人 | 群聊/私聊 | 删除自己的指定 UID |
+| `/群UID <游戏>` | 所有人 | 群聊 | 按“群名片：UID”查看本群列表 |
+| `/设置UID提醒 <间隔> <游戏>` | SUPERUSER | 群聊 | 开启或更新定时播报 |
+| `/关闭UID提醒` | SUPERUSER | 群聊 | 关闭定时播报 |
+| `/UID提醒状态` | 所有人 | 群聊 | 查看本群提醒状态 |
+| `/UID帮助` | 所有人 | 群聊/私聊 | 查看命令帮助 |
+
+支持的游戏名及常用别名：
+
+- 星布谷地：`星布谷地`、`星布谷底`、`星布`、`谷地`、`谷底`
+- 原神：`原神`、`ys`
+- 崩坏：星穹铁道：`星铁`、`铁道`、`崩铁`、`星穹铁道`、`hsr`
+- 绝区零：`绝区零`、`绝区`、`zzz`
+
+UID 必须为 5～20 位半角数字。
+
+提醒间隔支持 `分钟`、`小时`、`天`，范围为 10 分钟到 30 天。每个群保存一条提醒设置，再次设置会覆盖旧设置。机器人重启后设置仍然有效。
+
+## 示例
+
+```text
+用户：/绑定UID 原神 100123456
+机器人：已绑定原神 UID：100123456
+
+用户：/游戏UID 原神
+机器人：你的 UID：
+       原神：100123456
+
+用户：/删除UID 原神
+机器人：已删除原神 UID。
+
+用户：/群UID 原神
+机器人：本群原神 UID 列表（2人）：
+       提瓦特旅行者：100123456
+       应急食品：100654321
+
+SUPERUSER：/设置UID提醒 6小时 原神
+机器人：已设置原神 UID 定时提醒，每 6小时发送一次。
+       提醒内容：
+       想查看本群群友的原神 UID 并添加游戏好友？
+       发送 /群UID 原神，即可查看群友主动绑定的 UID（群名片：UID）。
+```
+
+## 开发
+
+```bash
+poetry install
+poetry run pytest
+poetry run ruff check .
+poetry run python -m compileall nonebot_plugin_game_uid
+```
+
+## 许可证
+
+MIT
